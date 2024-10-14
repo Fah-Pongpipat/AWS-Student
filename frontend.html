@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration with Data Table</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #333;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #3498db;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f9;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Student Registration</h2>
+    <div class="form-group">
+        <label for="name">Full Name</label>
+        <input type="text" id="name" placeholder="Enter your name" required>
+    </div>
+    <div class="form-group">
+        <label for="role">Position</label>
+        <select id="role" required>
+            <option value="student">นิสิต</option>
+            <option value="teacher">อาจารย์</option>
+        </select>
+    </div>
+    <button class="btn" onclick="submitData()">Submit</button>
+
+    <h2>Submitted Data</h2>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Position</th>
+                <th>User ID</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be appended here dynamically -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const backendUrl = 'http://3.222.189.178:5000';  // ใส่ Public IPv4 address ของ EC2 ที่นี่
+
+    function generateUserId() {
+        return Math.floor(100000 + Math.random() * 900000);
+    }
+
+    function submitData() {
+        const name = document.getElementById('name').value;
+        const role = document.getElementById('role').value;
+        const userId = generateUserId();
+
+        if (name && role) {
+            fetch(`${backendUrl}/register`, {  // ใช้ backendUrl ที่กำหนดไว้
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, role, userId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.querySelector('#data-table tbody');
+                const newRow = `<tr>
+                                <td>${data.name}</td>
+                                <td>${data.role}</td>
+                                <td>${data.userId}</td>
+                                </tr>`;
+                tableBody.insertAdjacentHTML('beforeend', newRow);
+            })
+            .catch(error => console.error('Error:', error));
+        } else {
+            alert("Please fill in all fields.");
+        }
+    }
+
+    function loadStudents() {
+        fetch(`${backendUrl}/students`)  // ใช้ backendUrl ที่กำหนดไว้
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.querySelector('#data-table tbody');
+            tableBody.innerHTML = ''; // ล้างข้อมูลเก่า
+            data.forEach(student => {
+                const newRow = `<tr>
+                                <td>${student.name}</td>
+                                <td>${student.role}</td>
+                                <td>${student.user_id}</td>
+                                </tr>`;
+                tableBody.insertAdjacentHTML('beforeend', newRow);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // เรียกใช้ฟังก์ชัน loadStudents เมื่อโหลดหน้าเว็บ
+    window.onload = loadStudents;
+</script>
+
+</body>
+</html>
